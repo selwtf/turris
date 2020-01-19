@@ -18,11 +18,13 @@ pr:
 pool:
   vmImage: ubuntu-18.04
 
-variables:
-- name: turris_device
-  value: omnia
-- name: turris_os_tag
-  value: v4.0.3
+resources:
+  pipelines:
+  - pipeline: turris-base
+    source: toolchain-base
+    trigger: 
+      branches:
+      - master
 
 stages:
 - stage: toolchain_turris_sdk  
@@ -33,6 +35,14 @@ stages:
   # Build sdk image for turris-build sdkd toolchain images
   - job: toolchain_turris_sdk
     displayName: docker image for turris-build sdk (build and push to dockerhub)
+    strategy:
+      matrix:
+        omnia-stable:
+          device: omnia
+          tag: stable
+        omnia-latest:
+          device: omnia
+          tag: latest
     timeoutInMinutes: 240
     
     steps: # [ script | bash | pwsh | powershell | checkout | task | templateReference ]
@@ -52,11 +62,10 @@ stages:
         command: build
         Dockerfile: toolchain/turris-sdk/dockerfile
         buildContext: toolchain/turris-sdk
-        arguments: --build-arg DEVICE=${{ variables.turris_device }} --build-arg TAG=${{ variables.turris_os_tag }}
+        arguments: --build-arg DEVICE=$(device) --build-arg TAG=$(tag)
         repository: selwtf/build-turris-sdk
         tags: |
-          ${{ variables.turris_device }}-${{ variables.turris_os_tag }}
-          ${{ variables.turris_device }}-latest
+          $(device)-$(tag)
 
     # Build AZP Docker image from new image with name: selwtf/build-turris-sdk:azp-${turris_device}-${turris_os_tag}
     - task: Docker@2
@@ -66,11 +75,10 @@ stages:
         command: build
         Dockerfile: toolchain/azure-pipelines/dockerfile
         buildContext: toolchain/azure-pipelines
-        arguments: --build-arg IMG=selwtf/build-turris-sdk:${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+        arguments: --build-arg IMG=selwtf/build-turris-sdk:$(device)-$(tag)
         repository: selwtf/build-turris-sdk
         tags: |
-          azp-${{ variables.turris_device }}-${{ variables.turris_os_tag }}
-          azp-${{ variables.turris_device }}-latest
+          azp-$(device)-$(tag)
 
     # Push Docker images to dockerhub (docker.io/selwtf/<name>:<tag>)
     - task: Docker@2
@@ -80,8 +88,6 @@ stages:
         command: push
         repository: selwtf/build-turris-sdk
         tags: |
-          ${{ variables.turris_device }}-${{ variables.turris_os_tag }}
-          ${{ variables.turris_device }}-latest
-          azp-${{ variables.turris_device }}-${{ variables.turris_os_tag }}
-          azp-${{ variables.turris_device }}-latest
+          $(device)-$(tag)
+          azp-$(device)-$(tag)
 

@@ -32,8 +32,8 @@ resources:
       branches:
       - master
   containers:
-  - container: turris-sdk-omnia-latest
-    image: selwtf/build-turris-sdk:azp-omnia-latest
+  - container: turris-sdk-omnia-stable
+    image: selwtf/build-turris-sdk:azp-omnia-stable
   - container: turris-pkg-repo
     image: selwtf/deploy-pkg-repo:latest
 
@@ -49,7 +49,7 @@ stages:
     strategy:
       matrix:
         omnia:
-          builder: turris-sdk-omnia-latest
+          builder: turris-sdk-omnia-stable
     container: $[ variables['builder'] ]
     timeoutInMinutes: 240
     steps:

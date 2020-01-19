@@ -1,7 +1,7 @@
-ARG TAG=v4.0.3
+ARG TAG=stable
 ARG DEVICE=omnia
 FROM selwtf/build-turris-base:${DEVICE}-${TAG}
-ARG TAG=v4.0.3
+ARG TAG=stable
 ARG DEVICE=omnia
 ENV TAG=${TAG}
 ENV DEVICE=${DEVICE}
