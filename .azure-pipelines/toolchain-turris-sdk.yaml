@@ -1,0 +1,87 @@
+name: $(Date:yyyyMMdd)
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/turris-sdk/*
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/turris-sdk/*
+
+pool:
+  vmImage: ubuntu-18.04
+
+variables:
+- name: turris_device
+  value: omnia
+- name: turris_os_tag
+  value: v4.0.3
+
+stages:
+- stage: toolchain_turris_sdk  
+  displayName: toolchain sdk docker image 
+  jobs:
+
+
+  # Build sdk image for turris-build sdkd toolchain images
+  - job: toolchain_turris_sdk
+    displayName: docker image for turris-build sdk (build and push to dockerhub)
+    timeoutInMinutes: 240
+    
+    steps: # [ script | bash | pwsh | powershell | checkout | task | templateReference ]
+    # Login to docker.io container registry
+    - task: Docker@2
+      name: docker_login
+      displayName: login to dockerhub
+      inputs:
+        command: login
+        containerRegistry: dockerhub-sel-wtf
+
+    # Build Docker image with name: selwtf/build-turris-sdk:${turris_device}-${turris_os_tag}
+    - task: Docker@2
+      name: docker_build
+      displayName: build docker image
+      inputs:
+        command: build
+        Dockerfile: toolchain/turris-sdk/dockerfile
+        buildContext: toolchain/turris-sdk
+        arguments: --build-arg DEVICE=${{ variables.turris_device }} --build-arg TAG=${{ variables.turris_os_tag }}
+        repository: selwtf/build-turris-sdk
+        tags: |
+          ${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+          ${{ variables.turris_device }}-latest
+
+    # Build AZP Docker image from new image with name: selwtf/build-turris-sdk:azp-${turris_device}-${turris_os_tag}
+    - task: Docker@2
+      name: docker_build_azp
+      displayName: build adapted azure pipelines builder docker image
+      inputs:
+        command: build
+        Dockerfile: toolchain/azure-pipelines/dockerfile
+        buildContext: toolchain/azure-pipelines
+        arguments: --build-arg IMG=selwtf/build-turris-sdk:${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+        repository: selwtf/build-turris-sdk
+        tags: |
+          azp-${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+          azp-${{ variables.turris_device }}-latest
+
+    # Push Docker images to dockerhub (docker.io/selwtf/<name>:<tag>)
+    - task: Docker@2
+      name: docker_push
+      displayName: push docker images
+      inputs:
+        command: push
+        repository: selwtf/build-turris-sdk
+        tags: |
+          ${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+          ${{ variables.turris_device }}-latest
+          azp-${{ variables.turris_device }}-${{ variables.turris_os_tag }}
+          azp-${{ variables.turris_device }}-latest
+

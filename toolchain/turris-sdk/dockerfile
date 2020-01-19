@@ -1,0 +1,42 @@
+ARG TAG=v4.0.3
+ARG DEVICE=omnia
+FROM selwtf/build-turris-base:${DEVICE}-${TAG}
+ARG TAG=v4.0.3
+ARG DEVICE=omnia
+ENV TAG=${TAG}
+ENV DEVICE=${DEVICE}
+
+# Build stock firmware + common dependencies
+RUN cd /turris-build/build &&\
+    ./scripts/feeds update -a &&\
+    make -j $((`nproc`+1)) package/linux-firmware/compile &&\
+    make -j $((`nproc`+1)) package/kernel/linux/compile &&\
+    make -j $((`nproc`+1)) package/libs/zlib/compile &&\
+    make -j $((`nproc`+1)) package/libs/libtool/compile &&\
+    make -j $((`nproc`+1)) package/libs/readline/compile &&\
+    make -j $((`nproc`+1)) package/libs/ncurses/compile &&\
+    make -j $((`nproc`+1)) package/libs/libubox/compile &&\
+    make -j $((`nproc`+1)) package/libs/libjson-c/compile &&\
+    make -j $((`nproc`+1)) package/utils/util-linux/compile &&\
+    make -j $((`nproc`+1)) package/utils/busybox/compile &&\
+#   make -j $((`nproc`+1)) package/utils/lvm2/compile &&\
+    make -j $((`nproc`+1)) package/utils/jsonfilter/compile &&\
+    make -j $((`nproc`+1)) package/utils/lua/compile &&\
+    make -j $((`nproc`+1)) package/system/ca-certificates/compile &&\
+    make -j $((`nproc`+1)) package/network/utils/iptables/compile
+# Add default user pkgs feed
+RUN echo "src-link custom /workspace/pkgs" >> /turris-build/build/feeds.conf
+
+USER root
+COPY ./build.sh /build.sh
+RUN chown turris-build:turris-build /build.sh && chmod +x /build.sh
+USER turris-build
+
+CMD [ "/build.sh" ]
+
+
+### DOCUMENTATION BEGIN
+# VOLUME /workspace
+ENV PKG_FEED=/workspace/pkgs
+ENV ARTIFACTS_DIR=/workspace/artifacts
+### DOCUMENTATION END

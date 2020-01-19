@@ -1,0 +1,4 @@
+package 'docker'
+
+config docker 'main'
+    option data_dir '/var/lib/docker'

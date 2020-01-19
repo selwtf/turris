@@ -1,0 +1,50 @@
+name: $(Date:yyyyMMdd)
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/pkg-repo/*
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/pkg-repo/*
+
+pool:
+  vmImage: ubuntu-18.04
+
+steps:
+- task: Docker@2
+  name: docker_login
+  displayName: login to dockerhub
+  inputs:
+    command: login
+    containerRegistry: dockerhub-sel-wtf
+
+# Build Docker image with name: selwtf/build-pkg-repo
+- task: Docker@2
+  name: docker_build
+  displayName: build docker image
+  inputs:
+    command: build
+    Dockerfile: toolchain/pkg-repo/dockerfile
+    buildContext: toolchain/pkg-repo
+    repository: selwtf/deploy-pkg-repo
+    tags: |
+      latest
+
+# Push Docker image to dockerhub (docker.io/selwtf/<name>:<tag>)
+- task: Docker@2
+  name: docker_push
+  displayName: push docker image
+  inputs:
+    command: push
+    repository: selwtf/deploy-pkg-repo
+    tags: |
+      latest
+

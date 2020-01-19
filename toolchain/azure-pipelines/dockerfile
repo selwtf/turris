@@ -1,0 +1,12 @@
+ARG IMG=selwtf/turris-sdk:omnia-latest
+FROM ${IMG}
+
+### add sudo and allow all users to switch to turris-build
+USER root
+RUN apt update && \
+	apt -y install --no-install-recommends \
+    sudo \
+    # Cleanup
+    && apt-get clean && rm -rf /var/lib/apt/lists/* 
+RUN echo 'ALL ALL=(ALL) NOPASSWD: /bin/su turris-build' > /etc/sudoers.d/ci-pipeline &&\
+    chmod 0440 /etc/sudoers.d/ci-pipeline

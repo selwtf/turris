@@ -1,0 +1,63 @@
+name: $(Date:yyyyMMdd)
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/azure-pipelines/*
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - toolchain/azure-pipelines/*
+
+pool:
+  vmImage: ubuntu-18.04
+
+jobs:
+- job: toolchain_azp
+  displayName: Adapt builder images for azure pipeline container jobs
+  strategy:
+    matrix:
+      sdk-omnia:
+        project: selwtf
+        image: build-turris-sdk
+        device: omnia
+        tag: latest
+
+  steps:
+  # Login to docker.io container registry
+  - task: Docker@2
+    name: docker_login
+    displayName: login to dockerhub
+    inputs:
+      command: login
+      containerRegistry: dockerhub-sel-wtf
+
+  # Build Docker image with name: ${project}/${image}:azp-${device}-${tag}
+  - task: Docker@2
+    name: docker_build
+    displayName: build docker image
+    inputs:
+      command: build
+      Dockerfile: toolchain/azure-pipelines/dockerfile
+      buildContext: toolchain/azure-pipelines
+      arguments: --build-arg IMG=$(project)/$(image):$(device)-$(tag)
+      repository: $(project)/$(image)
+      tags: |
+        azp-$(device)-$(tag)
+
+  # Push Docker image to dockerhub (docker.io/selwtf/<name>:<tag>)
+  - task: Docker@2
+    name: docker_push
+    displayName: push docker image
+    inputs:
+      command: push
+      repository: $(project)/$(image)
+      tags: |
+        azp-$(device)-$(tag)
+

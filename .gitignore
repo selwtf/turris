@@ -1,0 +1,7 @@
+# Build artifacts
+/artifacts
+# TEMPORARY: Scratch space
+/_tmp
+# TEMPORARY: Heavy WIP
+/os
+/toolchain/turris-os

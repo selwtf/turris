@@ -1,0 +1,49 @@
+FROM debian:buster-slim as builder
+RUN apt update && apt install -y --no-install-recommends \
+    ca-certificates git build-essential cmake \
+    && ln -s /usr/bin/python3 /usr/bin/python \
+    && apt clean && rm -rf /var/lib/apt/lists/* 
+RUN mkdir /workspace
+WORKDIR /workspace
+RUN git clone https://git.openwrt.org/project/usign.git && cd ./usign && cmake . && make
+
+
+
+FROM debian:buster-slim
+
+# Non-root user (azp: 1001)
+ENV UID 1001
+
+# Install needed libraries
+RUN apt update && apt install -y --no-install-recommends \
+    ca-certificates curl gzip \
+    python3 \
+    && ln -s /usr/bin/python3 /usr/bin/python \
+    && apt clean && rm -rf /var/lib/apt/lists/* 
+
+# Install + Configure gcsutil
+RUN curl -L https://storage.googleapis.com/pub/gsutil.tar.gz | tar xz -C / &&\ 
+    chown -R ${UID} /gsutil
+ENV PATH="${PATH}:/gsutil"
+COPY ./boto.cfg /etc/boto.cfg
+
+# Install usign
+COPY --from=builder /workspace/usign/usign /usr/bin/usign
+RUN chmod +x /usr/bin/usign && chown ${UID} /usr/bin/usign
+
+# Repo mgmt scripts
+COPY ./pkg-repo.sh /pkg-repo.sh
+COPY ./ipkg-make-index.sh /ipkg-make-index.sh
+RUN chmod +x /pkg-repo.sh && chown $UID /pkg-repo.sh &&\
+    chmod +x /ipkg-make-index.sh && chown $UID /ipkg-make-index.sh
+
+# Setup workspace
+RUN mkdir -p /workspace && mkdir -p /workspace/repo && mkdir -p /workspace/new && chown -R $UID /workspace
+
+CMD ["/pkg-repo.sh"]
+
+# Documentation
+ENV PKG_REPO="/workspace/repo"
+ENV NEW_PKGS="/workspace/new"
+ENV SIGN_KEY="/sign.key"
+ENV GCS_BUCKET="sel-wtf-turris"

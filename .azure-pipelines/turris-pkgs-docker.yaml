@@ -1,0 +1,101 @@
+name: $(Date:yyyyMMdd)
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - pkgs/docker/*
+    - pkgs/containerd/*
+    - pkgs/runc/*
+    - pkgs/tini-static/*
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - pkgs/docker/*
+    - pkgs/containerd/*
+    - pkgs/runc/*
+    - pkgs/tini-static/*
+
+pool:
+  vmImage: ubuntu-18.04
+
+resources:
+  pipelines:
+  - pipeline: turris-sdk
+    source: toolchain-sdk
+    trigger: 
+      branches:
+      - master
+  containers:
+  - container: turris-sdk-omnia-latest
+    image: selwtf/build-turris-sdk:azp-omnia-latest
+  - container: turris-pkg-repo
+    image: selwtf/deploy-pkg-repo:latest
+
+stages:
+# Build IPKGs
+- stage: build_ipkgs  
+  displayName: Build IPKGs for 'docker' + dependencies 
+  jobs:
+
+  # Build ipkg packages for all devices
+  - job: build
+    displayName: Build docker ipkg using build-turris-sdk builder image
+    strategy:
+      matrix:
+        omnia:
+          builder: turris-sdk-omnia-latest
+    container: $[ variables['builder'] ]
+    timeoutInMinutes: 240
+    steps:
+    - bash: |
+        echo Switching user to 'turris build' and building package 'docker'
+        sudo su -p -c "cp -r pkgs /workspace && DEVICE=$DEVICE PKG_FEED=$PKG_FEED ARTIFACTS_DIR=$ARTIFACTS_DIR /build.sh package docker" turris-build
+      displayName: 'Build package: docker'
+    - task: CopyFiles@2
+      displayName: Copy packages to staging directory
+      inputs:
+        sourceFolder: /workspace/artifacts
+        contents: '**' 
+        targetFolder: $(Build.ArtifactStagingDirectory)
+        overWrite: true
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: docker-ipkg
+
+# Deploy to Turris Package Repository
+- stage: deploy  
+  displayName: Deploy to Turris Package Repository 
+  jobs:
+  - job: pkg_repo
+    displayName: Update package repository
+    container: turris-pkg-repo
+    steps:
+
+    # Secret: GCP Service Account
+    - task: DownloadSecureFile@1
+      displayName: 'Retrieve GCP Service Account Credentials for GCS Bucket'
+      name: gcp_sa
+      inputs:
+        secureFile: 'gcp-sa-sel-wtf-turris.json'
+    - bash: cp $(gcp_sa.secureFilePath) /gsutil/service-account.json && chmod 600 /gsutil/service-account.json
+      displayName: 'Prepare GCS Credentials'
+    # Secret: usign signing key
+    - task: DownloadSecureFile@1
+      displayName: 'Retrieve package repository signing key'
+      name: sign_key
+      inputs:
+        secureFile: 'sel.release.key'
+    # Download new packages from build pipelines
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Retrieve packages from build pipeline artifacts'
+      inputs:
+        artifact: 'docker-ipkg'
+        path: $(Build.ArtifactStagingDirectory)
+    # Update package repo
+    - bash: NEW_PKGS=$(Build.ArtifactStagingDirectory) SIGN_KEY=$(sign_key.secureFilePath) GCS_BUCKET=sel-wtf-turris /pkg-repo.sh
+      displayName: 'Fetch, update and re-upload the turris package repo'
