@@ -40,6 +40,8 @@ define Package/docker-engine/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/bin/docker-proxy $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/bin/dockerd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(INSTALL_DATA) ./files/etc/sysctl.d/20-docker $(1)/etc/sysctl.d/20-docker
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/etc/config/docker $(1)/etc/config/docker
 	$(INSTALL_DIR) $(1)/etc/init.d
