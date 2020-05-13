@@ -15,8 +15,7 @@ pr:
     include:
     - toolchain/turris-base/*
 
-pool:
-  vmImage: ubuntu-18.04
+pool: Default
 
 stages:
 - stage: toolchain_turris_base  
