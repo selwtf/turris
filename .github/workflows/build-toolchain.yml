@@ -1,0 +1,62 @@
+name: toolchain-base
+
+on:
+  push:
+    branches: [ master ]
+    paths: ["toolchain/turris-base/**", "toolchain/turris-sdk/**"]
+  pull_request:
+    branches: [ master ]
+    paths: ["toolchain/turris-base/**", "toolchain/turris-sdk/**"]
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  toolchain-turris-sdk:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        
+      - name: "Build Toolchain base image"
+        uses: aevea/action-kaniko@v0.3.2
+        with:
+          image: selwtf/build-turris-base
+          tag: ${{ matrix.device }}-${{ matrix.tag }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          extra_args: "--context toolchain/turris-base --dockerfile toolchain/turris-base/dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+        
+      - name: "Build Toolchain SDK"
+        uses: aevea/action-kaniko@v0.3.2
+        with:
+          image: selwtf/build-turris-sdk
+          tag: ${{ matrix.device }}-${{ matrix.tag }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          extra_args: "--context toolchain/turris-sdk --dockerfile toolchain/turris-sdk/dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+          
+      - name: "Adapt SDK for Azure Pipelines"
+        uses: aevea/action-kaniko@v0.3.2
+        with:
+          image: selwtf/build-turris-sdk
+          tag: azp-${{ matrix.device }}-${{ matrix.tag }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          extra_args: "--context toolchain/azure-pipelines --dockerfile toolchain/azure-pipelines/dockerfile --build-arg IMG=selwtf/build-turris-sdk:${{ matrix.device }}-${{ matrix.tag }}"
+
+
+  toolchain-pkg-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        
+      - name: "Build Toolchain opkg repo management"
+        uses: aevea/action-kaniko@v0.3.2
+        with:
+          image: selwtf/deploy-pkg-repo
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          extra_args: "--context toolchain/pkg-repo --dockerfile toolchain/pkg-repo/dockerfile"
