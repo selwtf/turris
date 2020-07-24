@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: "Build Toolchain base image"
-        uses: aevea/action-kaniko@v0.3.2
+        uses: aevea/action-kaniko@v0.5.1
         with:
           image: selwtf/build-turris-base
           tag: ${{ matrix.device }}-${{ matrix.tag }}
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Build Toolchain SDK"
-        uses: aevea/action-kaniko@v0.3.2
+        uses: aevea/action-kaniko@v0.5.1
         with:
           image: selwtf/build-turris-sdk
           tag: ${{ matrix.device }}-${{ matrix.tag }}
@@ -48,7 +48,7 @@ jobs:
           extra_args: "--context toolchain/turris-sdk --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
           
       - name: "Adapt SDK for Azure Pipelines"
-        uses: aevea/action-kaniko@v0.3.2
+        uses: aevea/action-kaniko@v0.5.1
         with:
           image: selwtf/build-turris-sdk
           tag: azp-${{ matrix.device }}-${{ matrix.tag }}
@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: "Build Toolchain opkg repo management"
-        uses: aevea/action-kaniko@v0.3.2
+        uses: aevea/action-kaniko@v0.5.1
         with:
           image: selwtf/deploy-pkg-repo
           username: ${{ secrets.DOCKERHUB_USERNAME }}
