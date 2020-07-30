@@ -29,6 +29,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           extra_args: "--context toolchain/turris-base --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
   
   turris-sdk:
     needs: turris-base
@@ -46,6 +48,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           extra_args: "--context toolchain/turris-sdk --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
           
       - name: "Adapt SDK for Azure Pipelines"
         uses: aevea/action-kaniko@v0.5.1
