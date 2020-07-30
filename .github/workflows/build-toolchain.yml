@@ -28,7 +28,7 @@ jobs:
           tag: ${{ matrix.device }}-${{ matrix.tag }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/turris-base --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+          extra_args: "--context toolchain/turris-base --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
   
@@ -47,7 +47,7 @@ jobs:
           tag: ${{ matrix.device }}-${{ matrix.tag }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/turris-sdk --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }}"
+          extra_args: "--context toolchain/turris-sdk --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           
@@ -58,7 +58,7 @@ jobs:
           tag: azp-${{ matrix.device }}-${{ matrix.tag }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/azure-pipelines --dockerfile dockerfile --build-arg IMG=selwtf/build-turris-sdk:${{ matrix.device }}-${{ matrix.tag }}"
+          extra_args: "--context toolchain/azure-pipelines --dockerfile dockerfile --build-arg IMG=selwtf/build-turris-sdk:${{ matrix.device }}-${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
 
 
   deploy-pkg-repo:
@@ -73,4 +73,4 @@ jobs:
           image: selwtf/deploy-pkg-repo
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/pkg-repo --dockerfile dockerfile"
+          extra_args: "--context toolchain/pkg-repo --dockerfile dockerfile --build-arg WORKSPACE=/github/workspace"
