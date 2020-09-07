@@ -7,7 +7,7 @@ build() {
         PKG_NAME=${2}
         echo "Building package: ${PKG_NAME}"
         _build_env &&\
-        cd /turris-build/build &&\
+        cd /build &&\
         if [ "${SKIP_OS_PKGS}" == "true" ]; then ./scripts/feeds clean; fi &&\
         _add_pkg_feed &&\
         ./scripts/feeds install -p custom ${PKG_NAME} &&\
@@ -39,7 +39,7 @@ build() {
 # Helpers
 _add_pkg_feed() {
     echo "Loading Packages from custom feed in ${PKG_FEED}" &&\
-    cd /turris-build/build &&\
+    cd /build &&\
     sed -i "s,src-link custom /workspace/pkgs,src-link custom ${PKG_FEED},g" feeds.conf &&\
     ./scripts/feeds update custom
 }
@@ -48,22 +48,22 @@ _copy_artifacts() {
     if [ "${DEVICE}" == "omnia" ] && [ ! -z ${PKG_NAME} ]; then
         echo "Copying package artifacts for ${DEVICE}" &&\
         mkdir -p ${ARTIFACTS_DIR}/${DEVICE} &&\
-        cp -rf /turris-build/build/bin/packages/arm_cortex-a9_vfpv3/custom/* ${ARTIFACTS_DIR}/${DEVICE}/
+        cp -rf /build/bin/packages/arm_cortex-a9_vfpv3/custom/* ${ARTIFACTS_DIR}/${DEVICE}/
     elif [ "${DEVICE}" == "omnia" ]; then
         echo "Copying artifacts for ${DEVICE}" &&\
         mkdir -p ${ARTIFACTS_DIR}/${DEVICE} &&\
-        cp -r /turris-build/build/bin/targets/mvebu/cortexa9/packages/* ${ARTIFACTS_DIR}/${DEVICE}/
+        cp -r /build/bin/targets/mvebu/cortexa9/packages/* ${ARTIFACTS_DIR}/${DEVICE}/
     # elif [ "${DEVICE}" == "dummy" ]; then
     #     echo "Copying artifacts for ${DEVICE}"
     else 
         echo "Unknown device, copying all artifacts" &&\
         mkdir -p ${ARTIFACTS_DIR}/unknown &&\
-        cp -r /turris-build/build/bin/* ${ARTIFACTS_DIR}/unknown/
+        cp -r /build/bin/* ${ARTIFACTS_DIR}/unknown/
     fi
 }
 
 _clean() {
-    rm -rf /turris-build/build/bin
+    rm -rf /build/bin
 }
 
 _build_env() {

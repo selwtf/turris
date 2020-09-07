@@ -3,15 +3,15 @@ name: toolchain
 on:
   push:
     branches: [ master ]
-    paths: ["toolchain/turris-base/**", "toolchain/turris-sdk/**"]
+    paths: [".github/workflows", "toolchain/turris-sdk/**"]
   pull_request:
     branches: [ master ]
-    paths: ["toolchain/turris-base/**", "toolchain/turris-sdk/**"]
+    paths: [".github/workflows", "toolchain/turris-sdk/**"]
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
-  turris-base:
+  turris-sdk:
     strategy:
       matrix:
         device: [omnia]
@@ -20,57 +20,50 @@ jobs:
     steps:
       - name: "Checkout git repository"
         uses: actions/checkout@v2
-        
-      - name: "Build Toolchain base image"
-        uses: aevea/action-kaniko@v0.5.1
-        with:
-          image: selwtf/build-turris-base
-          tag: ${{ matrix.device }}-${{ matrix.tag }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/turris-base --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-  
-  turris-sdk:
-    needs: turris-base
-    strategy:
-      matrix:
-        device: [omnia]
-        tag: [stable, latest]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Build Toolchain SDK"
-        uses: aevea/action-kaniko@v0.5.1
-        with:
-          image: selwtf/build-turris-sdk
-          tag: ${{ matrix.device }}-${{ matrix.tag }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/turris-sdk --dockerfile dockerfile --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          
-      - name: "Adapt SDK for Azure Pipelines"
-        uses: aevea/action-kaniko@v0.5.1
-        with:
-          image: selwtf/build-turris-sdk
-          tag: azp-${{ matrix.device }}-${{ matrix.tag }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/azure-pipelines --dockerfile dockerfile --build-arg IMG=selwtf/build-turris-sdk:${{ matrix.device }}-${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace"
 
+      - name: "Login to DockerHub"
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: "Cache"
+        uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+
+      - name: "Build Turris SDK"
+        run: docker build --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace -t selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }} -f ./toolchain/turris-sdk/dockerfile ./toolchain/turris-sdk
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          DOCKER_BUILDKIT: 1
+
+      # - name: "Retag with Turris OS version / pre-release branch"
+      #   run: docker tag selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-sdk:${{ env.tag_detail }}
+
+      - name: "Push container image"
+        run: docker push selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }}
+        
+      - name: "Adapt SDK for Azure Pipelines"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: selwtf/build-turris-sdk
+          tags: azp-${{ matrix.device }}-${{ matrix.tag }},azp-${{ matrix.device }}-${{ env.TAG_DETAIL }}
+          build_args: IMG=selwtf/build-turris-sdk:${{ matrix.device }}-${{ matrix.tag }},WORKSPACE=/github/workspace
+          path: toolchain/azure-pipelines
+          dockerfile: toolchain/azure-pipelines/dockerfile
 
   deploy-pkg-repo:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout git repository"
         uses: actions/checkout@v2
-        
+
       - name: "Build Toolchain opkg repo management"
-        uses: aevea/action-kaniko@v0.5.1
+        uses: docker/build-push-action@v1
         with:
-          image: selwtf/deploy-pkg-repo
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          extra_args: "--context toolchain/pkg-repo --dockerfile dockerfile --build-arg WORKSPACE=/github/workspace"
+          repository: selwtf/deploy-pkg-repo
+          tags: latest
+          build_args: WORKSPACE=/github/workspace
+          path: toolchain/pkg-repo
+          dockerfile: toolchain/pkg-repo/dockerfile

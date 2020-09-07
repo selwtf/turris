@@ -1,14 +1,45 @@
+FROM debian:buster
+
 ARG TAG=stable
 ARG DEVICE=omnia
-FROM selwtf/build-turris-base:${DEVICE}-${TAG}
-ARG TAG=stable
-ARG DEVICE=omnia
-ENV TAG=${TAG}
-ENV DEVICE=${DEVICE}
+ENV TAG=$TAG
+ENV DEVICE=$DEVICE
+RUN echo "Building for ${DEVICE}@${TAG}"
+
+RUN apt update && \
+	apt -y install --no-install-recommends \
+    # Basic
+    ca-certificates wget curl git gettext unzip xz-utils \
+    # Standard build toolchain \
+    build-essential gcc gcc-multilib g++ g++-multilib libtool cmake automake autoconf autoconf-archive libssl-dev \
+    # Turris toolchain
+    fakeroot file rsync m4 flex bison pkg-config mklibs zlib1g-dev subversion lua5.1 liblua5.1-0-dev ccache python2.7 python2.7-dev python3 python3-dev \
+    # Turris OS dependencies
+    libcurl4-openssl-dev liburiparser-dev libevent-dev libarchive-dev uthash-dev gawk libncurses-dev \
+    # Cleanup
+    && apt-get clean && rm -rf /var/lib/apt/lists/* 
+
+# Setup build user and directories
+RUN groupadd -g 2000 turris-build && useradd -u 2000 -m -g turris-build turris-build &&\
+    mkdir -p /turris-build && chown turris-build:turris-build /turris-build &&\
+    mkdir -p /build && chown turris-build:turris-build /build &&\
+    mkdir -p /workspace && mkdir -p /workspace/pkgs && mkdir -p /workspace/artifacts && chown -R turris-build:turris-build /workspace
+USER turris-build
+WORKDIR /turris-build
+
+# Clone turris-build, checkout tag, compile toolchain
+RUN git clone https://gitlab.labs.nic.cz/turris/turris-build.git /turris-build &&\
+    if [ "${TAG}" = "stable" ]; then TAG=$(git describe --tags $(git rev-list --tags --max-count=1)); elif [ "${TAG}" = "latest" ]; then TAG="hbk"; fi &&\
+    echo "Configuring turris-build for ${DEVICE}@${TAG}" &&\
+    git checkout ${TAG} &&\
+    # Update Github Action ENV
+    echo "::set-env name=tag_detail::${TAG}"
+
+WORKDIR /build
+RUN /turris-build/compile_pkgs -t ${DEVICE} prepare_tools
 
 # Build stock firmware + common dependencies
-RUN cd /turris-build/build &&\
-    ./scripts/feeds update -a &&\
+RUN ./scripts/feeds update -a &&\
     make -j $((`nproc`+1)) package/linux-firmware/compile &&\
     make -j $((`nproc`+1)) package/kernel/linux/compile &&\
     make -j $((`nproc`+1)) package/libs/zlib/compile &&\
@@ -24,14 +55,17 @@ RUN cd /turris-build/build &&\
     make -j $((`nproc`+1)) package/utils/lua/compile &&\
     make -j $((`nproc`+1)) package/system/ca-certificates/compile &&\
     make -j $((`nproc`+1)) package/network/utils/iptables/compile
-# Add default user pkgs feed
-RUN echo "src-link custom /workspace/pkgs" >> /turris-build/build/feeds.conf
 
+# Add default user pkgs feed (is replaced using sed in build.sh)
+RUN echo "src-link custom /workspace/pkgs" >> /build/feeds.conf
+
+# Build script
 USER root
 COPY ./build.sh /build.sh
 RUN chown turris-build:turris-build /build.sh && chmod +x /build.sh
 USER turris-build
 
+# Entrypoint / CMD
 CMD [ "/build.sh" ]
 
 
