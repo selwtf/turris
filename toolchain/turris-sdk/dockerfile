@@ -16,6 +16,8 @@ RUN apt update && \
     fakeroot file rsync m4 flex bison pkg-config mklibs zlib1g-dev subversion lua5.1 liblua5.1-0-dev ccache python2.7 python2.7-dev python3 python3-dev \
     # Turris OS dependencies
     libcurl4-openssl-dev liburiparser-dev libevent-dev libarchive-dev uthash-dev gawk libncurses-dev \
+    # SDK / CI Tooling
+    sudo \
     # Cleanup
     && apt-get clean && rm -rf /var/lib/apt/lists/* 
 
@@ -24,6 +26,12 @@ RUN groupadd -g 2000 turris-build && useradd -u 2000 -m -g turris-build turris-b
     mkdir -p /turris-build && chown turris-build:turris-build /turris-build &&\
     mkdir -p /build && chown turris-build:turris-build /build &&\
     mkdir -p /workspace && mkdir -p /workspace/pkgs && mkdir -p /workspace/artifacts && chown -R turris-build:turris-build /workspace
+## allow all users to switch to turris-build
+RUN echo 'ALL ALL=(ALL) NOPASSWD: /bin/su turris-build' > /etc/sudoers.d/ci-pipeline &&\
+    chmod 0440 /etc/sudoers.d/ci-pipeline
+## allow turris-build passwordless sudo
+RUN echo 'turris-build ALL=\(root\) NOPASSWD:ALL' > /etc/sudoers.d/turris-build &&\
+    chmod 0440 /etc/sudoers.d/turris-build
 USER turris-build
 WORKDIR /turris-build
 
@@ -32,8 +40,7 @@ RUN git clone https://gitlab.labs.nic.cz/turris/turris-build.git /turris-build &
     if [ "${TAG}" = "stable" ]; then TAG=$(git describe --tags $(git rev-list --tags --max-count=1)); elif [ "${TAG}" = "latest" ]; then TAG="hbk"; fi &&\
     echo "Configuring turris-build for ${DEVICE}@${TAG}" &&\
     git checkout ${TAG} &&\
-    # Update Github Action ENV
-    echo "::set-env name=tag_detail::${TAG}"
+    echo ${TAG} > version.txt
 
 WORKDIR /build
 RUN /turris-build/compile_pkgs -t ${DEVICE} prepare_tools
@@ -59,14 +66,14 @@ RUN ./scripts/feeds update -a &&\
 # Add default user pkgs feed (is replaced using sed in build.sh)
 RUN echo "src-link custom /workspace/pkgs" >> /build/feeds.conf
 
-# Build script
+# Build script 
 USER root
 COPY ./build.sh /build.sh
 RUN chown turris-build:turris-build /build.sh && chmod +x /build.sh
 USER turris-build
 
 # Entrypoint / CMD
-CMD [ "/build.sh" ]
+CMD [ "sudo", "-u", "turris-build", "/build.sh" ]
 
 
 ### DOCUMENTATION BEGIN
@@ -74,3 +81,9 @@ CMD [ "/build.sh" ]
 ENV PKG_FEED=/workspace/pkgs
 ENV ARTIFACTS_DIR=/workspace/artifacts
 ### DOCUMENTATION END
+
+
+### CI HACKS
+# Set Github Workflow 'tag_detail' env with actual Turris OS Version
+RUN echo "::set-env name=tag_detail::$(cat /turris-build/version.txt)"
+### CI HACKS END

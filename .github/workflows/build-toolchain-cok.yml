@@ -1,0 +1,44 @@
+name: toolchain-cok
+
+on:
+  workflow_run:
+    workflows: ["toolchain"]
+    branches: [master]
+    types: [completed]
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/build-toolchain-cok.yaml", "toolchain/turris-cok-sdk/**"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/build-toolchain-cok.yaml", "toolchain/turris-cok-sdk/**"]
+
+jobs:
+  turris-cok-sdk:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout git repository"
+        uses: actions/checkout@v2
+
+      - name: "Login to DockerHub"
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: "Build Turris SDK for container optimized kernel"
+        run: docker build --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace -t selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} -f ./toolchain/turris-cok-sdk/dockerfile ./toolchain/turris-cok-sdk
+        env:
+          NODE_OPTIONS: "--max_old_space_size=7168"
+          DOCKER_BUILDKIT: 1
+
+      - name: "Push container image"
+        run: docker push selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+  
+      - name: "Retag with Turris OS version / pre-release branch"
+        run: docker tag selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-cok-sdk:$tag_detail
+        continue-on-error: true
+
+      - name: "Push retagged container image"
+        run: docker push selwtf/turris-cok-sdk:$tag_detail
+        continue-on-error: true
