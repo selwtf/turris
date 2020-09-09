@@ -17,9 +17,9 @@ RUN apt update && \
     # Turris OS dependencies
     libcurl4-openssl-dev liburiparser-dev libevent-dev libarchive-dev uthash-dev gawk libncurses-dev \
     # SDK / CI Tooling
-    sudo \
+    sudo vim gpg \
     # Cleanup
-    && apt-get clean && rm -rf /var/lib/apt/lists/* 
+    && apt clean && rm -rf /var/lib/apt/lists/* 
 
 # Setup build user and directories
 RUN groupadd -g 2000 turris-build && useradd -u 2000 -m -g turris-build turris-build &&\
@@ -30,7 +30,7 @@ RUN groupadd -g 2000 turris-build && useradd -u 2000 -m -g turris-build turris-b
 RUN echo 'ALL ALL=(ALL) NOPASSWD: /bin/su turris-build' > /etc/sudoers.d/ci-pipeline &&\
     chmod 0440 /etc/sudoers.d/ci-pipeline
 ## allow turris-build passwordless sudo
-RUN echo 'turris-build ALL=\(root\) NOPASSWD:ALL' > /etc/sudoers.d/turris-build &&\
+RUN echo 'turris-build ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/turris-build &&\
     chmod 0440 /etc/sudoers.d/turris-build
 USER turris-build
 WORKDIR /turris-build

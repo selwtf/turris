@@ -3,12 +3,12 @@ name: toolchain-turris-sdk
 on:
   push:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-turris-sdk.yaml", "toolchain/turris-sdk/**"]
+    paths: [".github/workflows/toolchain-turris-sdk.yml", "toolchain/turris-sdk/**"]
   pull_request:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-turris-sdk.yaml", "toolchain/turris-sdk/**"]
-    schedule:
-    - cron: "0 0 * * *"
+    paths: [".github/workflows/toolchain-turris-sdk.yml", "toolchain/turris-sdk/**"]
+  schedule:
+  - cron: "0 0 * * *"
 
 jobs:
   ci:

@@ -16,7 +16,7 @@ ENV UID 1001
 
 # Install needed libraries
 RUN apt update && apt install -y --no-install-recommends \
-    ca-certificates curl gzip \
+    gpg ca-certificates curl gzip \
     python3 \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && apt clean && rm -rf /var/lib/apt/lists/* 

@@ -25,16 +25,12 @@ gsutil -m rsync -r -d gs://${GCS_BUCKET}/ $PKG_REPO/ || exit 1
 echo "Updating $PKG_REPO with packages from $NEW_PKGS"
 cp -rf $NEW_PKGS/* $PKG_REPO || exit 1
 
-for DEVICE_REPO in $PKG_REPO/*/; do
-    DEVICE_REPO=${DEVICE_REPO::-1}
+echo "Recreating package index in $PKG_REPO"
+cd $PKG_REPO && /ipkg-make-index.sh . > Packages &&\
+cat Packages | gzip > Packages.gz &&\
 
-    echo "Recreating package index in $DEVICE_REPO"
-    cd $DEVICE_REPO && /ipkg-make-index.sh . > Packages &&\
-    cat Packages | gzip > Packages.gz &&\
-    #
-    echo "Signing package index in $DEVICE_REPO" &&\
-    usign -S -s $SIGN_KEY -m Packages || exit 1
-done
+echo "Signing package index in $PKG_REPO" &&\
+usign -S -s $SIGN_KEY -m Packages || exit 1
 
 echo "Upload current (updated) repository to gs://${GCS_BUCKET}"
 gsutil -m rsync -r -d $PKG_REPO/ gs://${GCS_BUCKET}/

@@ -1,0 +1,68 @@
+name: packages-cok-firmware
+
+on:
+  workflow_run:
+    workflows: ["toolchain-turris-cok-sdk"]
+    branches: [master]
+    types: [completed]
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/packages-cok-firmware.yml"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/packages-cok-firmware.yml"]
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Extract firmware packages from pre-built cok sdk"
+        run: |
+          mkdir -p artifacts
+          mkdir -p /tmp/artifacts
+          id=$(docker create selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }})
+          docker cp $id:/build/bin/targets/mvebu/cortexa9/packages /tmp/artifacts/ && mv /tmp/artifacts/packages/* artifacts/
+          docker cp $id:/build/bin/packages/arm_cortex-a9_vfpv3-d16/base /tmp/artifacts/ && mv /tmp/artifacts/base/* artifacts/
+          docker rm -v $id
+
+      - name: "Store artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.device }}-${{ matrix.tag }}-firmware
+          path: artifacts
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' # Only deploy when running from master
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    container: selwtf/deploy-pkg-repo:v0.0.1
+    steps:
+    - name: "Checkout git repository"
+      uses: actions/checkout@v2
+
+    - name: "Prepare secrets"
+      run: |
+        gpg --quiet --batch --yes --decrypt --passphrase=$SECRET_KEY --output /gsutil/service-account.json .secrets/gcp-sa.json.enc && chmod 600 /gsutil/service-account.json
+        gpg --quiet --batch --yes --decrypt --passphrase=$SECRET_KEY --output /sign.key .secrets/sign.key.enc && chmod 600 /sign.key
+      env:
+        SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
+
+    - name: "Download cok firmware artifacts"
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.device }}-${{ matrix.tag }}-firmware
+        path: /workspace/new
+        
+    - name: "Deploy new packages and update public repo"
+      run: /pkg-repo.sh
+      env:
+        GCS_BUCKET: sel-wtf-turris/${{ matrix.device }}/cok/${{ matrix.tag }}/packages
+      

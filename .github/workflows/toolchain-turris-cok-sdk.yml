@@ -2,15 +2,15 @@ name: toolchain-turris-cok-sdk
 
 on:
   workflow_run:
-    workflows: ["toolchain"]
+    workflows: ["toolchain-turris-sdk"]
     branches: [master]
     types: [completed]
   push:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yml", "toolchain/turris-cok-sdk/**"]
   pull_request:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yml", "toolchain/turris-cok-sdk/**"]
 
 jobs:
   ci:

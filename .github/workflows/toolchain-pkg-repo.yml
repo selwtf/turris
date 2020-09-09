@@ -3,12 +3,10 @@ name: toolchain-pkg-repo
 on:
   push:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-pkg-repo.yaml", "toolchain/pkg-repo/**"]
+    paths: [".github/workflows/toolchain-pkg-repo.yml", "toolchain/pkg-repo/**"]
   pull_request:
     branches: [ master ]
-    paths: [".github/workflows/toolchain-pkg-repo.yaml", "toolchain/pkg-repo/**"]
-  schedule:
-    - cron: "0 0 * * *"
+    paths: [".github/workflows/toolchain-pkg-repo.yml", "toolchain/pkg-repo/**"]
 
 jobs:
   ci:
