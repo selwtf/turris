@@ -81,9 +81,3 @@ CMD [ "sudo", "-u", "turris-build", "/build.sh" ]
 ENV PKG_FEED=/workspace/pkgs
 ENV ARTIFACTS_DIR=/workspace/artifacts
 ### DOCUMENTATION END
-
-
-### CI HACKS
-# Set Github Workflow 'tag_detail' env with actual Turris OS Version
-RUN echo "::set-env name=tag_detail::$(cat /turris-build/version.txt)"
-### CI HACKS END

@@ -1,2 +1,2 @@
-# FROM selwtf/turris-cok-sdk:omnia-stable
-FROM selwtf/turris-sdk:omnia-stable
+FROM selwtf/turris-cok-sdk:omnia-stable
+# FROM selwtf/turris-sdk:omnia-stable

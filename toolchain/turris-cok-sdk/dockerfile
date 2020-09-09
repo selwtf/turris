@@ -16,8 +16,3 @@ COPY kcfg_docker /turris-build/configs/omnia/kcfg_docker
 # Reconfigure and build kernel
 RUN /turris-build/compile_pkgs -t ${DEVICE} configure
 RUN /turris-build/compile_pkgs -t ${DEVICE} compile_target
-
-### CI HACKS
-# Set Github Workflow 'tag_detail' env with actual Turris OS Version
-RUN echo "::set-env name=tag_detail::$(cat /turris-build/version.txt)"
-### CI HACKS END

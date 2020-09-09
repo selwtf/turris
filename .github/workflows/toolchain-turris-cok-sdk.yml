@@ -1,4 +1,4 @@
-name: toolchain-cok
+name: toolchain-turris-cok-sdk
 
 on:
   workflow_run:
@@ -7,13 +7,13 @@ on:
     types: [completed]
   push:
     branches: [ master ]
-    paths: [".github/workflows/build-toolchain-cok.yaml", "toolchain/turris-cok-sdk/**"]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
   pull_request:
     branches: [ master ]
-    paths: [".github/workflows/build-toolchain-cok.yaml", "toolchain/turris-cok-sdk/**"]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
 
 jobs:
-  turris-cok-sdk:
+  ci:
     strategy:
       matrix:
         device: [omnia]
@@ -32,13 +32,17 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=7168"
           DOCKER_BUILDKIT: 1
 
-      - name: "Push container image"
-        run: docker push selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
-  
-      - name: "Retag with Turris OS version / pre-release branch"
-        run: docker tag selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-cok-sdk:$tag_detail
+      - name: "Extract exact Turris OS version and retag image"
+        run: | 
+          id=$(docker create selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }})
+          docker cp $id:/turris-build/version.txt turris-os-version.txt
+          docker rm -v $id
+          export tag_detail=$(cat turris-os-version.txt)
+          echo "::set-env name=tag_detail::$tag_detail" 
+          docker tag selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-cok-sdk:$tag_detail
         continue-on-error: true
 
-      - name: "Push retagged container image"
-        run: docker push selwtf/turris-cok-sdk:$tag_detail
-        continue-on-error: true
+      - name: "Push container image"
+        run: |
+          docker push selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+          docker push selwtf/turris-cok-sdk:${{ env.tag_detail }}
