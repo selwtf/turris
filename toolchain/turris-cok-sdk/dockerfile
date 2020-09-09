@@ -1,0 +1,18 @@
+ARG TAG=stable
+ARG DEVICE=omnia
+FROM selwtf/turris-sdk:${DEVICE}-${TAG}
+ARG TAG=stable
+ARG DEVICE=omnia
+ENV TAG=$TAG
+ENV DEVICE=$DEVICE
+RUN echo "Building for ${DEVICE}@${TAG}"
+
+# Enable seccomp
+RUN sed -i "s/CONFIG_KERNEL_SECCOMP=n/CONFIG_KERNEL_SECCOMP=y/g" /turris-build/configs/common/hardening
+
+# Ensure all docker kernel configs are met
+COPY kcfg_docker /turris-build/configs/omnia/kcfg_docker
+
+# Reconfigure and build kernel
+RUN /turris-build/compile_pkgs -t ${DEVICE} configure
+RUN /turris-build/compile_pkgs -t ${DEVICE} compile_target

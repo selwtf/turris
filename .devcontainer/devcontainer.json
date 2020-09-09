@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/master/containers/go
 {
 	"name": "turris-sdk",
-	"dockerFile": "Dockerfile",
+	"dockerFile": "dockerfile",
 	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
 
 	// Use 'settings' to set *default* container specific settings.json values on container create. 

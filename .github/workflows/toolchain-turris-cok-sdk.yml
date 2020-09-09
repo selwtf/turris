@@ -1,0 +1,48 @@
+name: toolchain-turris-cok-sdk
+
+on:
+  workflow_run:
+    workflows: ["toolchain"]
+    branches: [master]
+    types: [completed]
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-turris-cok-sdk.yaml", "toolchain/turris-cok-sdk/**"]
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout git repository"
+        uses: actions/checkout@v2
+
+      - name: "Login to DockerHub"
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: "Build Turris SDK for container optimized kernel"
+        run: docker build --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace -t selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} -f ./toolchain/turris-cok-sdk/dockerfile ./toolchain/turris-cok-sdk
+        env:
+          NODE_OPTIONS: "--max_old_space_size=7168"
+          DOCKER_BUILDKIT: 1
+
+      - name: "Extract exact Turris OS version and retag image"
+        run: | 
+          id=$(docker create selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }})
+          docker cp $id:/turris-build/version.txt turris-os-version.txt
+          docker rm -v $id
+          export tag_detail=$(cat turris-os-version.txt)
+          echo "::set-env name=tag_detail::$tag_detail" 
+          docker tag selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-cok-sdk:$tag_detail
+        continue-on-error: true
+
+      - name: "Push container image"
+        run: |
+          docker push selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+          docker push selwtf/turris-cok-sdk:${{ env.tag_detail }}

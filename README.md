@@ -20,6 +20,11 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
 **TODO**
 
 
+## Container-optimized Kernel (cok)
+
+**TODO**
+
+
 
 ## CI
 CI builds are run using Azure Pipelines
@@ -36,9 +41,8 @@ CI builds are run using Azure Pipelines
 
 ## Turris Toolchain
 Build Images for developing software on [Turris devices](https://www.turris.cz/en/):
-* **turris-base**: Intended to be used **only*** as base image for buildtarget-specific toolchain images
-* **turris-sdk**: Toolchain to build specific package for Turris
-* **turris-os**: Toolchain to build Turris OS firmware image \[**WIP!**\]
+* **turris-sdk**: Toolchain to build specific package for stock Turris OS
+* **turris-ck-sdk**: Toolchain to build specific package for Turris OS with *container-optimized kernel* \[**WIP!**\]
 
 ### turris-sdk 
 [![Build Status](https://dev.azure.com/selwtf/turris/_apis/build/status/toolchain-sdk?branchName=master)](https://dev.azure.com/selwtf/turris/_build/latest?definitionId=5&branchName=master)

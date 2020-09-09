@@ -1,0 +1,29 @@
+name: toolchain-pkg-repo
+
+on:
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-pkg-repo.yaml", "toolchain/pkg-repo/**"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-pkg-repo.yaml", "toolchain/pkg-repo/**"]
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout git repository"
+        uses: actions/checkout@v2
+
+      - name: "Build opkg repo manager"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: selwtf/deploy-pkg-repo
+          tags: latest
+          build_args: WORKSPACE=/github/workspace
+          path: toolchain/pkg-repo
+          dockerfile: toolchain/pkg-repo/dockerfile

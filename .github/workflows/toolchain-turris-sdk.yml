@@ -1,0 +1,46 @@
+name: toolchain-turris-sdk
+
+on:
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-turris-sdk.yaml", "toolchain/turris-sdk/**"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/toolchain-turris-sdk.yaml", "toolchain/turris-sdk/**"]
+    schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout git repository"
+        uses: actions/checkout@v2
+
+      - name: "Login to DockerHub"
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: "Build Turris SDK"
+        run: docker build --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace -t selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }} -f ./toolchain/turris-sdk/dockerfile ./toolchain/turris-sdk
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          DOCKER_BUILDKIT: 1
+
+      - name: "Extract exact Turris OS version and retag image"
+        run: | 
+          id=$(docker create selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }})
+          docker cp $id:/turris-build/version.txt turris-os-version.txt
+          docker rm -v $id
+          export tag_detail=$(cat turris-os-version.txt)
+          echo "::set-env name=tag_detail::$tag_detail" 
+          docker tag selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-sdk:$tag_detail
+        continue-on-error: true
+
+      - name: "Push container image"
+        run: |
+          docker push selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }}
+          docker push selwtf/turris-sdk:${{ env.tag_detail }}
