@@ -5,3 +5,5 @@
 # TEMPORARY: Heavy WIP
 /os
 /toolchain/turris-os
+.gitsecret/keys/random_seed
+!*.secret

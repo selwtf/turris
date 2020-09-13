@@ -43,16 +43,16 @@ _add_pkg_feed() {
     sed -i "s,src-link custom /workspace/pkgs,src-link custom ${PKG_FEED},g" feeds.conf &&\
     ./scripts/feeds update custom
 }
-# bin/packages/arm_cortex-a9_vfpv3/custom/
+
 _copy_artifacts() {
     if [ "${DEVICE}" == "omnia" ] && [ ! -z ${PKG_NAME} ]; then
         echo "Copying package artifacts for ${DEVICE}" &&\
         mkdir -p ${ARTIFACTS_DIR}/${DEVICE} &&\
-        cp -rf /build/bin/packages/arm_cortex-a9_vfpv3/custom/* ${ARTIFACTS_DIR}/${DEVICE}/
+        cp -rf /build/bin/packages/arm_cortex-a9_vfpv3-d16/custom/* ${ARTIFACTS_DIR}/
     elif [ "${DEVICE}" == "omnia" ]; then
         echo "Copying artifacts for ${DEVICE}" &&\
         mkdir -p ${ARTIFACTS_DIR}/${DEVICE} &&\
-        cp -r /build/bin/targets/mvebu/cortexa9/packages/* ${ARTIFACTS_DIR}/${DEVICE}/
+        cp -r /build/bin/targets/mvebu/cortexa9/packages/* ${ARTIFACTS_DIR}/
     # elif [ "${DEVICE}" == "dummy" ]; then
     #     echo "Copying artifacts for ${DEVICE}"
     else 
