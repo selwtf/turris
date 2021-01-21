@@ -38,7 +38,7 @@ jobs:
           docker cp $id:/turris-build/version.txt turris-os-version.txt
           docker rm -v $id
           export tag_detail=$(cat turris-os-version.txt)
-          echo "::set-env name=tag_detail::$tag_detail" 
+          echo "tag_detail=$tag_detail" >> $GITHUB_ENV
           docker tag selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} selwtf/turris-cok-sdk:$tag_detail
         continue-on-error: true
 
