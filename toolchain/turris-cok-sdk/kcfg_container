@@ -65,3 +65,5 @@ CONFIG_PACKAGE_kmod-vxlan=y
 CONFIG_PACKAGE_libnetfilter-conntrack=y
 CONFIG_PACKAGE_libnfnetlink=y
 CONFIG_PACKAGE_libseccomp=y
+
+CONFIG_SECCOMP=y
