@@ -25,7 +25,7 @@ jobs:
         run: git clone https://github.com/openwrt/packages.git /workspace/pkgs
 
       - name: "Build docker"
-        run: /build.sh package docker-ce
+        run: /build.sh package docker
 
       - name: "Store artifacts"
         uses: actions/upload-artifact@v2
@@ -52,7 +52,7 @@ jobs:
       env:
         SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
 
-    - name: "Download cok firmware artifacts"
+    - name: "Download docker artifacts"
       uses: actions/download-artifact@v2
       with:
         name: ${{ matrix.device }}-${{ matrix.tag }}-community-docker
