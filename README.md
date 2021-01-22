@@ -2,6 +2,7 @@
 Just a small collection of packages for Turris OS (OpenWRT) that I build in my free time. Don't expect anything. Not even that it builds... 
 
 **Featuring**:
+* [K3s](#k3s) **(NEW and WIP!)**
 * [Docker CE](#docker-ce-containerd)
 * [containerd](#docker-ce-containerd)
 
@@ -32,6 +33,9 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
 
 
 ## Packages
+### K3s
+*Turris Omnia COK Build:* ![packages-k3s](https://github.com/selwtf/turris/workflows/packages-community-docker/badge.svg)
+
 ### Docker CE (+ containerd)
 *With thanks to the [OpenWRT Community](https://github.com/openwrt/packages/tree/master/utils/docker)*
 
