@@ -37,7 +37,7 @@ jobs:
 
   deploy:
     needs: ci
-    if: github.event_name == 'push' # Only deploy when running from master
+    if: ${{ github.event_name != 'pull_request' || ( github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event.workflow_run.event != 'pull_request' }} # Skip deploying unmerged PRs
     strategy:
       matrix:
         device: [omnia]
