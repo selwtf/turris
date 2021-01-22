@@ -21,13 +21,17 @@ jobs:
     runs-on: ubuntu-latest
     container: selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
     steps:
+      - name: "Switch user to turris-build"
+        run: sudo su - turris-build
+
       - name: "Checkout git repository"
         uses: actions/checkout@v2
-        with:
-          path: /workspace
 
       - name: "Build k3s"
-        run: /build.sh package k3s
+        run: |
+          mkdir -p /workspace/pkgs &&\
+          cp -r pkgs/k3s /workspace/pkgs/ &&\
+          /build.sh package k3s
 
       - name: "Store artifacts"
         uses: actions/upload-artifact@v2
