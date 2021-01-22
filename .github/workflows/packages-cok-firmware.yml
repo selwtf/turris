@@ -37,7 +37,6 @@ jobs:
 
   deploy:
     needs: ci
-    if: github.event_name == 'push' # Only deploy when running from master
     strategy:
       matrix:
         device: [omnia]
