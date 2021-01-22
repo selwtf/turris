@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: "Checkout git repository"
         uses: actions/checkout@v2
+        with:
+          path: /workspace
 
       - name: "Build k3s"
         run: /build.sh package k3s
