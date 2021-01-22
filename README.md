@@ -33,7 +33,7 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
 
 ## Packages
 ### Docker CE (+ containerd)
-*With thanks to the [OpenWRT Community](https://github.com/openwrt/packages/tree/master/utils/docker-ce)*
+*With thanks to the [OpenWRT Community](https://github.com/openwrt/packages/tree/master/utils/docker)*
 
 *Turris Omnia Vanilla Build:* ![packages-cok-community-docker](https://github.com/selwtf/turris/workflows/packages-cok-community-docker/badge.svg)
 
