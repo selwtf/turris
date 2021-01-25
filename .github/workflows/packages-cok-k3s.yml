@@ -19,7 +19,9 @@ jobs:
         device: [omnia]
         tag: [stable, latest]
     runs-on: ubuntu-latest
-    container: selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+    container: 
+      image: selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+      options: --user 1001
     steps:
       - name: "Checkout git repository"
         uses: actions/checkout@v2
