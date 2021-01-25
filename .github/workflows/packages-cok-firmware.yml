@@ -24,8 +24,7 @@ jobs:
         run: |
           mkdir -p artifacts
           mkdir -p /tmp/artifacts
-          export id=firmware
-          docker run -e DEBUG=true --name $id selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }} /build.sh package kmod-ikconfig
+          id=$(docker create selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }})
           docker cp $id:/build/bin/targets/mvebu/cortexa9/packages /tmp/artifacts/ && mv /tmp/artifacts/packages/* artifacts/
           docker cp $id:/build/bin/packages/arm_cortex-a9_vfpv3-d16/base /tmp/artifacts/ && mv /tmp/artifacts/base/* artifacts/
           docker rm -v $id
