@@ -1,0 +1,22 @@
+#
+# The PAM configuration file for the Shadow `su' service
+#
+
+# This allows root to su without passwords (normal operation)
+auth       sufficient pam_rootok.so
+
+# Bypass for turris-build target user (=anyone can su into turris-build)
+auth  sufficient                 pam_succeed_if.so user = turris-build
+
+# Default
+session       required   pam_env.so readenv=1
+session       required   pam_env.so readenv=1 envfile=/etc/default/locale
+session    optional   pam_mail.so nopen
+session    required   pam_limits.so
+
+# The standard Unix authentication modules, used with
+# NIS (man nsswitch) as well as normal /etc/passwd and
+# /etc/shadow entries.
+@include common-auth
+@include common-account
+@include common-session
