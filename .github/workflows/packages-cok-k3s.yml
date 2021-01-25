@@ -28,7 +28,6 @@ jobs:
 
       - name: "Build k3s"
         run: |
-          sudo su - turris-build
           mkdir -p /workspace/pkgs &&\
           cp -r pkgs/k3s /workspace/pkgs/ &&\
           /build.sh package k3s
