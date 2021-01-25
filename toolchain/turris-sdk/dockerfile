@@ -27,6 +27,10 @@ RUN groupadd -g 2000 turris-build && useradd -u 2000 -m -g turris-build turris-b
     mkdir -p /build && chown turris-build:turris-build /build &&\
     mkdir -p /workspace && mkdir -p /workspace/pkgs && mkdir -p /workspace/artifacts && chown -R turris-build:turris-build /workspace
 ## allow all users to switch to turris-build
+RUN rm /etc/pam.d/su
+COPY su.pam /etc/pam.d/su
+RUN chmod 0644 /etc/pam.d/su
+## allow all users to switch to turris-build (using sudo)
 RUN echo 'ALL ALL=(ALL) NOPASSWD: /bin/su turris-build' > /etc/sudoers.d/ci-pipeline &&\
     chmod 0440 /etc/sudoers.d/ci-pipeline
 ## allow turris-build passwordless sudo

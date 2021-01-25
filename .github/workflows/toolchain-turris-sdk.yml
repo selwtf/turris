@@ -27,7 +27,7 @@ jobs:
       - name: "Build Turris SDK"
         run: docker build --build-arg DEVICE=${{ matrix.device }} --build-arg TAG=${{ matrix.tag }} --build-arg WORKSPACE=/github/workspace -t selwtf/turris-sdk:${{ matrix.device }}-${{ matrix.tag }} -f ./toolchain/turris-sdk/dockerfile ./toolchain/turris-sdk
         env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
+          NODE_OPTIONS: "--max_old_space_size=7168"
           DOCKER_BUILDKIT: 1
 
       - name: "Extract exact Turris OS version and retag image"
