@@ -19,7 +19,7 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
 
 ![cok kernel size difference](doc/img/zimage-diff.png)
 
-*(You can find the custom kernel config in ./toolchain/turris-cok-sdk/kcfg_docker)*
+*(You can find the custom kernel config in ./toolchain/turris-cok-sdk/kcfg_container and kcfg_container_patch)*
 1. Install container-optimized kernel repo: `curl https://raw.githubusercontent.com/selwtf/turris/master/toolchain/install/repo-cok.sh | sh -`
 2. Install 'docker' package: `curl https://raw.githubusercontent.com/selwtf/turris/master/toolchain/install/package.sh | sh -s docker`
 3. (Optional) Trigger `pkgupdate`

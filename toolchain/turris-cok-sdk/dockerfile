@@ -11,7 +11,8 @@ RUN echo "Building for ${DEVICE}@${TAG}"
 RUN sed -i "s/CONFIG_KERNEL_SECCOMP=n/CONFIG_KERNEL_SECCOMP=y/g" /turris-build/configs/common/hardening
 
 # Ensure all docker kernel configs are met
-COPY kcfg_docker /turris-build/configs/omnia/kcfg_docker
+COPY kcfg_container /turris-build/configs/omnia/kcfg_container
+COPY kcfg_container_patch /turris-build/kcfg_container_patch
 
 # Reconfigure and build kernel
 RUN /turris-build/compile_pkgs -t ${DEVICE} configure
