@@ -1,0 +1,5 @@
+package 'k3s'
+
+config k3s 'main'
+    option data_dir '/srv/k3s'
+    option pvc_dir '/srv/k3s-pvc'

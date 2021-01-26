@@ -1,0 +1,71 @@
+name: packages-cok-k3s
+
+on:
+  workflow_run:
+    workflows: ["toolchain-turris-cok-sdk"]
+    branches: [master]
+    types: [completed]
+  push:
+    branches: [ master ]
+    paths: [".github/workflows/packages-cok-k3s.yml"]
+  pull_request:
+    branches: [ master ]
+    paths: [".github/workflows/packages-cok-k3s.yml"]
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    container: 
+      image: selwtf/turris-cok-sdk:${{ matrix.device }}-${{ matrix.tag }}
+      options: --user 1001
+    steps:
+      - name: "Checkout git repository"
+        uses: actions/checkout@v2
+
+      - name: "Build k3s"
+        run: |
+          mkdir -p /workspace/pkgs &&\
+          cp -r pkgs/k3s /workspace/pkgs/ &&\
+          /build.sh package k3s
+
+      - name: "Store artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.device }}-${{ matrix.tag }}-k3s
+          path: /workspace/artifacts
+
+  deploy:
+    needs: ci
+    if: ${{ github.event_name != 'pull_request' || ( github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event.workflow_run.event != 'pull_request' }} # Skip deploying unmerged PRs
+    strategy:
+      matrix:
+        device: [omnia]
+        tag: [stable, latest]
+    runs-on: ubuntu-latest
+    container: selwtf/deploy-pkg-repo:v0.0.1
+    steps:
+    - name: "Checkout git repository"
+      uses: actions/checkout@v2
+
+    - name: "Prepare secrets"
+      run: |
+        gpg --quiet --batch --yes --decrypt --passphrase=$SECRET_KEY --output /gsutil/service-account.json .secrets/gcp-sa.json.enc && chmod 600 /gsutil/service-account.json
+        gpg --quiet --batch --yes --decrypt --passphrase=$SECRET_KEY --output /sign.key .secrets/sign.key.enc && chmod 600 /sign.key
+      env:
+        SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
+
+    - name: "Download k3s artifacts"
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.device }}-${{ matrix.tag }}-k3s
+        path: /workspace/new
+        
+    - name: "Deploy new packages and update public repo"
+      run: /pkg-repo.sh
+      env:
+        GCS_BUCKET: sel-wtf-turris/${{ matrix.device }}/cok/${{ matrix.tag }}/packages
+      
