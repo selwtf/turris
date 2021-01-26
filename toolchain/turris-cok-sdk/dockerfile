@@ -14,5 +14,5 @@ RUN sed -i "s/CONFIG_KERNEL_SECCOMP=n/CONFIG_KERNEL_SECCOMP=y/g" /turris-build/c
 COPY kcfg_container /turris-build/configs/omnia/kcfg_container
 
 # Reconfigure and build kernel
-RUN /turris-build/compile_pkgs -t ${DEVICE} configure
+RUN /turris-build/compile_pkgs -t ${DEVICE} configure || cat /build/.config
 RUN /turris-build/compile_pkgs -t ${DEVICE} compile_target
