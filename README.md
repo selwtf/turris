@@ -12,7 +12,8 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
    ⚠️**ATTENTION**⚠️: This will install selwtf (my) repository public keys in your Turris Device!
 2. Install 'docker' package: `curl https://raw.githubusercontent.com/selwtf/turris/master/toolchain/install/package.sh | sh -s docker`
 3. (Optional) Trigger `pkgupdate`
-
+4. (Optional) `reboot`
+   - If `logread | grep docker` shows ``Couldn't load match `addrtype':No such file or directory``
 
 ## TLDR: I want docker on Turris Omnia with more cgroups, stability,...
 **This will replace the stock kernel with a custom build with bigger filesize:**
@@ -23,6 +24,8 @@ Just a small collection of packages for Turris OS (OpenWRT) that I build in my f
 1. Install container-optimized kernel repo: `curl https://raw.githubusercontent.com/selwtf/turris/master/toolchain/install/repo-cok.sh | sh -`
 2. Install 'docker' package: `curl https://raw.githubusercontent.com/selwtf/turris/master/toolchain/install/package.sh | sh -s docker`
 3. (Optional) Trigger `pkgupdate`
+4. (Optional) `reboot`
+   - If `logread | grep docker` shows ``Couldn't load match `addrtype':No such file or directory``
 
 
 ## A bit less TLDR: What do the install scripts do?
